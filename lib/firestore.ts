@@ -56,10 +56,18 @@ export async function createExam(exam: Omit<Exam, 'id'>): Promise<string> {
   const id = generateId()
   if (isMockMode || !db) {
     mockStore.addExam({ ...exam, id })
+    console.warn('[Firestore] MOCK MODE: Exam not saved to Firestore', { id, exam })
     return id
   }
-  await setDoc(doc(db, 'exams', id), exam)
-  return id
+  try {
+    console.log('[Firestore] Writing exam to Firestore: exams/' + id, exam)
+    await setDoc(doc(db, 'exams', id), exam)
+    console.log('[Firestore] Successfully wrote exam to Firestore: exams/' + id)
+    return id
+  } catch (error) {
+    console.error('[Firestore] Firestore write error:', error)
+    throw error
+  }
 }
 
 export async function updateExam(id: string, data: Partial<Exam>): Promise<void> {

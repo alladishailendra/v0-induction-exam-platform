@@ -90,6 +90,8 @@ function groupQuestionsByTopic(questions: Question[]): Record<string, Question[]
   }, {} as Record<string, Question[]>)
 }
 
+import { useAuth } from '@/lib/auth-context'
+
 export function ExamsTab() {
   const [exams, setExams] = useState<Exam[]>([])
   const [questions, setQuestions] = useState<Question[]>([])
@@ -184,7 +186,14 @@ export function ExamsTab() {
     }
   }
 
+  const { admin } = useAuth();
+
   const handleSubmit = async () => {
+    console.log('[Admin ExamsTab] Save button clicked', { formData, selectedExam });
+    if (!admin.isAuthenticated) {
+      toast.error('Permissions check failed: Admin not authenticated')
+      return
+    }
     if (!formData.title.trim() || !formData.code.trim()) {
       toast.error('Title and code are required')
       return
@@ -199,10 +208,17 @@ export function ExamsTab() {
         toast.success('Exam updated')
       } else {
         // Create exam and add selected questions
-        const examId = await createExam(formData)
-        
+        let examId: string | undefined
+        try {
+          examId = await createExam(formData)
+        } catch (err) {
+          console.error('[Admin ExamsTab] Firestore createExam error:', err)
+          toast.error('Firestore error: ' + (err?.message || err))
+          setLoading(false)
+          return
+        }
         // Add selected questions to the new exam
-        if (selectedQuestionsForNew.length > 0) {
+        if (selectedQuestionsForNew.length > 0 && examId) {
           for (let i = 0; i < selectedQuestionsForNew.length; i++) {
             await addQuestionToExam(examId, selectedQuestionsForNew[i], i)
           }

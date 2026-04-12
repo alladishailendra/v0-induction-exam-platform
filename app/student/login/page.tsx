@@ -51,25 +51,33 @@ export default function StudentLoginPage() {
         return
       }
 
-      // Validate exam code
+      // Always use Firestore for exam lookup
       const exam = await getExamByCode(formData.examCode.toUpperCase())
-      
-      if (!exam) {
+
+      // Defensive: ensure all required fields exist and are strings
+      if (!exam || typeof exam.scheduleStart !== 'string' || typeof exam.scheduleEnd !== 'string') {
         toast.error('Invalid exam code')
         setLoading(false)
         return
       }
 
+      // Only allow published and active exams
       if (!exam.isPublished || !exam.isActive) {
         toast.error('This exam is not available')
         setLoading(false)
         return
       }
 
-      // Check schedule
+      // Normalize and parse scheduleStart/scheduleEnd as UTC
       const now = new Date()
-      const start = new Date(exam.scheduleStart)
-      const end = new Date(exam.scheduleEnd)
+      const start = new Date(Date.parse(exam.scheduleStart.replace(/Z?$/, 'Z')))
+      const end = new Date(Date.parse(exam.scheduleEnd.replace(/Z?$/, 'Z')))
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        toast.error('Exam schedule is invalid')
+        setLoading(false)
+        return
+      }
 
       if (now < start) {
         toast.error('Exam has not started yet')

@@ -103,9 +103,11 @@ export default function ExamPage() {
         }
 
         // Request fullscreen if required
-        if (examData.requireFullscreen) {
-          requestFullscreen()
-        }
+        // Only allow requestFullscreen on a real user gesture, not automatically
+        // (Guard: do not call here)
+        // if (examData.requireFullscreen) {
+        //   requestFullscreen()
+        // }
 
         setLoading(false)
       } catch (error) {

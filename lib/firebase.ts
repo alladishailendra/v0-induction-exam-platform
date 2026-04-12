@@ -19,8 +19,21 @@ const isFirebaseConfigured = Boolean(
   firebaseConfig.projectId !== 'undefined'
 )
 
-// Use mock mode only when Firebase is not configured
-const isMockMode = !isFirebaseConfigured
+// Use mock mode only when Firebase is not configured or Firestore init fails
+let isMockMode = false
+
+try {
+  if (!firebaseConfig.apiKey || !firebaseConfig.projectId || firebaseConfig.apiKey === 'undefined' || firebaseConfig.projectId === 'undefined') {
+    isMockMode = true
+    console.log('[Firebase] Mock mode active: missing config')
+  } else {
+    isMockMode = false
+    console.log('[Firebase] Firestore mode active: config present')
+  }
+} catch (e) {
+  isMockMode = true
+  console.log('[Firebase] Mock mode active: config error', e)
+}
 
 let app: FirebaseApp | null = null
 let db: Firestore | null = null
@@ -39,10 +52,12 @@ function initializeFirebase(): { app: FirebaseApp; db: Firestore; auth: Auth } |
     const firebaseAuth = getAuth(firebaseApp)
     
     console.log('[Firebase] Initialized successfully with project:', firebaseConfig.projectId)
+    console.log('[Firebase] Firestore mode active')
     
     return { app: firebaseApp, db: firestore, auth: firebaseAuth }
   } catch (error) {
-    console.error('[Firebase] Initialization error:', error)
+    isMockMode = true
+    console.error('[Firebase] Initialization error, switching to mock mode:', error)
     return null
   }
 }
