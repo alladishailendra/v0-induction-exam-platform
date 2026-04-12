@@ -1,6 +1,6 @@
-import { initializeApp, getApps } from 'firebase/app'
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
-import { getAuth, connectAuthEmulator } from 'firebase/auth'
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app'
+import { getFirestore, type Firestore } from 'firebase/firestore'
+import { getAuth, type Auth } from 'firebase/auth'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,16 +11,48 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }
 
-const isMockMode = !firebaseConfig.apiKey || !firebaseConfig.projectId
+// Check if Firebase is properly configured
+const isFirebaseConfigured = Boolean(
+  firebaseConfig.apiKey && 
+  firebaseConfig.projectId &&
+  firebaseConfig.apiKey !== 'undefined' &&
+  firebaseConfig.projectId !== 'undefined'
+)
 
-let app: ReturnType<typeof initializeApp> | null = null
-let db: ReturnType<typeof getFirestore> | null = null
-let auth: ReturnType<typeof getAuth> | null = null
+// Use mock mode only when Firebase is not configured
+const isMockMode = !isFirebaseConfigured
 
-if (!isMockMode) {
-  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
-  db = getFirestore(app)
-  auth = getAuth(app)
+let app: FirebaseApp | null = null
+let db: Firestore | null = null
+let auth: Auth | null = null
+
+function initializeFirebase(): { app: FirebaseApp; db: Firestore; auth: Auth } | null {
+  if (isMockMode) {
+    console.log('[Firebase] Running in mock mode - localStorage fallback active')
+    return null
+  }
+
+  try {
+    // Safe initialization pattern: check if already initialized
+    const firebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)
+    const firestore = getFirestore(firebaseApp)
+    const firebaseAuth = getAuth(firebaseApp)
+    
+    console.log('[Firebase] Initialized successfully with project:', firebaseConfig.projectId)
+    
+    return { app: firebaseApp, db: firestore, auth: firebaseAuth }
+  } catch (error) {
+    console.error('[Firebase] Initialization error:', error)
+    return null
+  }
+}
+
+// Initialize on module load
+const firebase = initializeFirebase()
+if (firebase) {
+  app = firebase.app
+  db = firebase.db
+  auth = firebase.auth
 }
 
 export { app, db, auth, isMockMode }

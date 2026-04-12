@@ -80,6 +80,16 @@ const defaultExam: Omit<Exam, 'id'> = {
   updatedAt: '',
 }
 
+// Group questions by topic for easier selection
+function groupQuestionsByTopic(questions: Question[]): Record<string, Question[]> {
+  return questions.reduce((acc, q) => {
+    const topic = q.topic || 'Uncategorized'
+    if (!acc[topic]) acc[topic] = []
+    acc[topic].push(q)
+    return acc
+  }, {} as Record<string, Question[]>)
+}
+
 export function ExamsTab() {
   const [exams, setExams] = useState<Exam[]>([])
   const [questions, setQuestions] = useState<Question[]>([])
@@ -90,6 +100,8 @@ export function ExamsTab() {
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null)
   const [examQuestions, setExamQuestions] = useState<string[]>([])
   const [formData, setFormData] = useState<Omit<Exam, 'id'>>(defaultExam)
+  const [selectedQuestionsForNew, setSelectedQuestionsForNew] = useState<string[]>([])
+  const [showQuestionSelector, setShowQuestionSelector] = useState(false)
 
   const loadData = async () => {
     try {
@@ -112,6 +124,7 @@ export function ExamsTab() {
 
   const handleCreate = () => {
     setSelectedExam(null)
+    setSelectedQuestionsForNew([])
     setFormData({
       ...defaultExam,
       code: generateCode(),
@@ -185,14 +198,31 @@ export function ExamsTab() {
         })
         toast.success('Exam updated')
       } else {
-        await createExam(formData)
-        toast.success('Exam created')
+        // Create exam and add selected questions
+        const examId = await createExam(formData)
+        
+        // Add selected questions to the new exam
+        if (selectedQuestionsForNew.length > 0) {
+          for (let i = 0; i < selectedQuestionsForNew.length; i++) {
+            await addQuestionToExam(examId, selectedQuestionsForNew[i], i)
+          }
+        }
+        toast.success(`Exam created with ${selectedQuestionsForNew.length} questions`)
       }
       await loadData()
       setShowDialog(false)
+      setSelectedQuestionsForNew([])
     } catch (error) {
       toast.error('Failed to save exam')
     }
+  }
+
+  const handleToggleQuestionForNew = (questionId: string) => {
+    setSelectedQuestionsForNew(prev => 
+      prev.includes(questionId) 
+        ? prev.filter(id => id !== questionId)
+        : [...prev, questionId]
+    )
   }
 
   const handleTogglePublish = async (exam: Exam) => {
@@ -472,6 +502,64 @@ export function ExamsTab() {
                 />
               </div>
             </div>
+
+            {/* Add Questions Section - Only for new exams */}
+            {!selectedExam && (
+              <div className="space-y-3 pt-4 border-t border-slate-200">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-medium">Add Questions ({selectedQuestionsForNew.length} selected)</Label>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setShowQuestionSelector(!showQuestionSelector)}
+                  >
+                    {showQuestionSelector ? 'Hide' : 'Select Questions'}
+                  </Button>
+                </div>
+                
+                {showQuestionSelector && (
+                  <div className="max-h-64 overflow-y-auto border border-slate-200 rounded-lg">
+                    {questions.length === 0 ? (
+                      <p className="p-4 text-center text-slate-500 text-sm">
+                        No questions available. Create questions in the Questions tab first.
+                      </p>
+                    ) : (
+                      Object.entries(groupQuestionsByTopic(questions)).map(([topic, topicQuestions]) => (
+                        <div key={topic} className="border-b border-slate-100 last:border-b-0">
+                          <div className="px-3 py-2 bg-slate-50 text-sm font-medium text-slate-700">
+                            {topic} ({topicQuestions.length})
+                          </div>
+                          {topicQuestions.map(q => (
+                            <div
+                              key={q.id}
+                              onClick={() => handleToggleQuestionForNew(q.id)}
+                              className={`flex items-start gap-3 px-3 py-2 cursor-pointer hover:bg-slate-50 transition-colors ${
+                                selectedQuestionsForNew.includes(q.id) ? 'bg-green-50' : ''
+                              }`}
+                            >
+                              <div className={`w-4 h-4 mt-0.5 rounded border flex-shrink-0 flex items-center justify-center ${
+                                selectedQuestionsForNew.includes(q.id)
+                                  ? 'bg-green-500 border-green-500'
+                                  : 'border-slate-300'
+                              }`}>
+                                {selectedQuestionsForNew.includes(q.id) && (
+                                  <Check className="w-3 h-3 text-white" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-slate-800 line-clamp-1">{q.text}</p>
+                                <Badge variant="secondary" className="text-xs mt-1">{q.difficulty}</Badge>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <DialogFooter>
