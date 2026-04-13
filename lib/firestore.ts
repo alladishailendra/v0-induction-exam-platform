@@ -13,7 +13,7 @@ import {
   orderBy,
   setDoc
 } from 'firebase/firestore'
-import { db, isMockMode } from './firebase'
+import { db, isMockMode, storage } from './firebase'
 import { mockStore } from './mock-store'
 import type { 
   Exam, 
@@ -294,13 +294,26 @@ export async function getAllSnapshots(): Promise<ProctoringSnapshot[]> {
   return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ProctoringSnapshot))
 }
 
-export async function addSnapshot(snapshot: Omit<ProctoringSnapshot, 'id'>): Promise<void> {
+import { ref, uploadString, getDownloadURL } from 'firebase/storage'
+
+export async function addSnapshot(snapshot: Omit<ProctoringSnapshot, 'id' | 'imageData'> & { imageData?: string }): Promise<void> {
   const id = generateId()
-  if (isMockMode || !db) {
+  if (isMockMode || !db || !storage) {
     mockStore.addSnapshot({ ...snapshot, id })
     return
   }
-  await setDoc(doc(db, 'proctoringSnapshots', id), snapshot)
+  let imageUrl = ''
+  if (snapshot.imageData) {
+    const imageRef = ref(storage, `proctoringSnapshots/${id}.jpg`)
+    await uploadString(imageRef, snapshot.imageData, 'data_url')
+    imageUrl = await getDownloadURL(imageRef)
+  }
+  await setDoc(doc(db, 'proctoringSnapshots', id), {
+    ...snapshot,
+    id,
+    imageUrl,
+    imageData: undefined // do not store base64 in Firestore
+  })
 }
 
 export async function updateSnapshot(id: string, data: Partial<ProctoringSnapshot>): Promise<void> {

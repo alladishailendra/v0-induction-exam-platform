@@ -203,9 +203,9 @@ export function ProctoringTab() {
                           className="aspect-video bg-slate-100 flex items-center justify-center cursor-pointer"
                           onClick={() => setSelectedSnapshot(snapshot)}
                         >
-                          {snapshot.imageData ? (
+                          {snapshot.imageUrl ? (
                             <img 
-                              src={snapshot.imageData} 
+                              src={snapshot.imageUrl} 
                               alt="Snapshot"
                               className="w-full h-full object-cover"
                             />
@@ -272,9 +272,9 @@ export function ProctoringTab() {
           </DialogHeader>
           {selectedSnapshot && (
             <div>
-              {selectedSnapshot.imageData ? (
+              {selectedSnapshot.imageUrl ? (
                 <img 
-                  src={selectedSnapshot.imageData} 
+                  src={selectedSnapshot.imageUrl} 
                   alt="Snapshot"
                   className="w-full rounded-lg"
                 />

@@ -106,7 +106,7 @@ export interface ProctoringSnapshot {
   id: string
   sessionId: string
   examId: string
-  imageData?: string
+  imageUrl?: string // Firebase Storage URL
   timestamp: string
   trigger: string
   status: 'pending' | 'reviewed' | 'flagged'

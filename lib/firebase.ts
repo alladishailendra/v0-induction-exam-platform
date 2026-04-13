@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app'
 import { getFirestore, type Firestore } from 'firebase/firestore'
 import { getAuth, type Auth } from 'firebase/auth'
+import { getStorage, type FirebaseStorage } from 'firebase/storage'
 
 // Detect environment: Vite or Next.js
 let envStyle: 'vite' | 'next' = 'vite'
@@ -11,13 +12,13 @@ if (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_FIR
 console.log('[Firebase] Using env style:', envStyle)
 
 const firebaseConfig = envStyle === 'vite' ? {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+  apiKey: typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_FIREBASE_API_KEY : undefined,
+  authDomain: typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_FIREBASE_AUTH_DOMAIN : undefined,
+  projectId: typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_FIREBASE_PROJECT_ID : undefined,
+  storageBucket: typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_FIREBASE_STORAGE_BUCKET : undefined,
+  messagingSenderId: typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID : undefined,
+  appId: typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_FIREBASE_APP_ID : undefined,
+  measurementId: typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_FIREBASE_MEASUREMENT_ID : undefined,
 } : {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -56,8 +57,9 @@ try {
 let app: FirebaseApp | null = null
 let db: Firestore | null = null
 let auth: Auth | null = null
+let storage: FirebaseStorage | null = null
 
-function initializeFirebase(): { app: FirebaseApp; db: Firestore; auth: Auth } | null {
+function initializeFirebase(): { app: FirebaseApp; db: Firestore; auth: Auth; storage: FirebaseStorage } | null {
   if (isMockMode) {
     console.log('[Firebase] Running in mock mode - localStorage fallback active')
     return null
@@ -68,11 +70,12 @@ function initializeFirebase(): { app: FirebaseApp; db: Firestore; auth: Auth } |
     const firebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)
     const firestore = getFirestore(firebaseApp)
     const firebaseAuth = getAuth(firebaseApp)
+    const firebaseStorage = getStorage(firebaseApp)
     
     console.log('[Firebase] Initialized successfully with project:', firebaseConfig.projectId)
     console.log('[Firebase] Firestore mode active')
     
-    return { app: firebaseApp, db: firestore, auth: firebaseAuth }
+    return { app: firebaseApp, db: firestore, auth: firebaseAuth, storage: firebaseStorage }
   } catch (error) {
     isMockMode = true
     console.error('[Firebase] Initialization error, switching to mock mode:', error)
@@ -86,6 +89,7 @@ if (firebase) {
   app = firebase.app
   db = firebase.db
   auth = firebase.auth
+  storage = firebase.storage
 }
 
-export { app, db, auth, isMockMode }
+export { app, db, auth, storage, isMockMode }

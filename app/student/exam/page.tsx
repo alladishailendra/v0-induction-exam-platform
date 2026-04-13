@@ -286,7 +286,7 @@ export default function ExamPage() {
         await addSnapshot({
           sessionId: session.id,
           examId: session.examId,
-          imageData,
+          imageData, // will be uploaded to Storage, not Firestore
           timestamp: new Date().toISOString(),
           trigger,
           status: 'pending',
