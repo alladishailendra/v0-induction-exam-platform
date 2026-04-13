@@ -130,7 +130,7 @@ export function ExamsTab() {
     setFormData({
       ...defaultExam,
       code: generateCode(),
-      scheduleStart: new Date().toISOString().slice(0, 16),
+      scheduleStart: new Date().toISOString().slice(0, 16), // 'YYYY-MM-DDTHH:mm' (local)
       scheduleEnd: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

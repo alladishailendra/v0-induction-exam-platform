@@ -70,22 +70,27 @@ export default function StudentLoginPage() {
 
       // Normalize and parse scheduleStart/scheduleEnd as UTC
       const now = new Date()
-      const start = new Date(Date.parse(exam.scheduleStart.replace(/Z?$/, 'Z')))
-      const end = new Date(Date.parse(exam.scheduleEnd.replace(/Z?$/, 'Z')))
-
-      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-        toast.error('Exam schedule is invalid')
-        setLoading(false)
-        return
+      let start: Date | null = null
+      let end: Date | null = null
+      if (exam.scheduleStart && typeof exam.scheduleStart === 'string') {
+        // Accept both ISO and 'YYYY-MM-DDTHH:mm' (local) formats
+        start = new Date(exam.scheduleStart.endsWith('Z') ? exam.scheduleStart : exam.scheduleStart + 'Z')
+      }
+      if (exam.scheduleEnd && typeof exam.scheduleEnd === 'string') {
+        end = new Date(exam.scheduleEnd.endsWith('Z') ? exam.scheduleEnd : exam.scheduleEnd + 'Z')
       }
 
-      if (now < start) {
+      if (start && isNaN(start.getTime())) start = null
+      if (end && isNaN(end.getTime())) end = null
+
+      // Only block if scheduleStart is set and now is before it
+      if (start && now < start) {
         toast.error('Exam has not started yet')
         setLoading(false)
         return
       }
-
-      if (now > end) {
+      // Only block if scheduleEnd is set and now is after it
+      if (end && now > end) {
         toast.error('Exam has ended')
         setLoading(false)
         return
