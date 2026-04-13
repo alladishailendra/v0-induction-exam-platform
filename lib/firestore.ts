@@ -187,8 +187,16 @@ export async function createSession(session: Omit<StudentSession, 'id'>): Promis
     mockStore.addSession({ ...session, id })
     return id
   }
-  await setDoc(doc(db, 'studentSessions', id), session)
-  return id
+  try {
+    // Only include Firestore-safe data
+    const sessionData = JSON.parse(JSON.stringify(session))
+    await setDoc(doc(db, 'studentSessions', id), sessionData)
+    console.log('[Firestore] Successfully wrote student session to Firestore: studentSessions/' + id)
+    return id
+  } catch (error) {
+    console.error('[Firestore] Student session write error:', error, session)
+    throw error
+  }
 }
 
 export async function updateSession(id: string, data: Partial<StudentSession>): Promise<void> {

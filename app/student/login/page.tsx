@@ -137,7 +137,15 @@ export default function StudentLoginPage() {
         submittedAt: null,
       }
 
-      const sessionId = await createSession(sessionData)
+      let sessionId: string
+      try {
+        sessionId = await createSession(sessionData)
+      } catch (err) {
+        console.error('Student session creation error:', err)
+        toast.error('Failed to create student session: ' + (err instanceof Error ? err.message : String(err)))
+        setLoading(false)
+        return
+      }
       const session: StudentSession = { ...sessionData, id: sessionId }
       
       setStudentSession(session)
