@@ -73,11 +73,11 @@ export default function StudentLoginPage() {
       let start: Date | null = null
       let end: Date | null = null
       if (exam.scheduleStart && typeof exam.scheduleStart === 'string') {
-        // Accept both ISO and 'YYYY-MM-DDTHH:mm' (local) formats
-        start = new Date(exam.scheduleStart.endsWith('Z') ? exam.scheduleStart : exam.scheduleStart + 'Z')
+        // Parse as ISO string (always UTC)
+        start = new Date(exam.scheduleStart)
       }
       if (exam.scheduleEnd && typeof exam.scheduleEnd === 'string') {
-        end = new Date(exam.scheduleEnd.endsWith('Z') ? exam.scheduleEnd : exam.scheduleEnd + 'Z')
+        end = new Date(exam.scheduleEnd)
       }
 
       if (start && isNaN(start.getTime())) start = null

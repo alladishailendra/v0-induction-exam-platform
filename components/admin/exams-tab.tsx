@@ -127,13 +127,17 @@ export function ExamsTab() {
   const handleCreate = () => {
     setSelectedExam(null)
     setSelectedQuestionsForNew([])
+    // Normalize scheduleStart and scheduleEnd to ISO string at save time
+    const now = new Date()
+    const defaultStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes())
+    const defaultEnd = new Date(defaultStart.getTime() + 7 * 24 * 60 * 60 * 1000)
     setFormData({
       ...defaultExam,
       code: generateCode(),
-      scheduleStart: new Date().toISOString().slice(0, 16), // 'YYYY-MM-DDTHH:mm' (local)
-      scheduleEnd: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      scheduleStart: defaultStart.toISOString(),
+      scheduleEnd: defaultEnd.toISOString(),
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
     })
     setShowDialog(true)
   }
@@ -142,8 +146,8 @@ export function ExamsTab() {
     setSelectedExam(exam)
     setFormData({
       ...exam,
-      scheduleStart: exam.scheduleStart.slice(0, 16),
-      scheduleEnd: exam.scheduleEnd.slice(0, 16),
+      scheduleStart: exam.scheduleStart ? new Date(exam.scheduleStart).toISOString() : '',
+      scheduleEnd: exam.scheduleEnd ? new Date(exam.scheduleEnd).toISOString() : '',
     })
     setShowDialog(true)
   }
@@ -201,8 +205,11 @@ export function ExamsTab() {
 
     try {
       if (selectedExam) {
+        // Always save scheduleStart and scheduleEnd as ISO strings
         await updateExam(selectedExam.id, {
           ...formData,
+          scheduleStart: formData.scheduleStart ? new Date(formData.scheduleStart).toISOString() : '',
+          scheduleEnd: formData.scheduleEnd ? new Date(formData.scheduleEnd).toISOString() : '',
           updatedAt: new Date().toISOString(),
         })
         toast.success('Exam updated')
@@ -210,7 +217,12 @@ export function ExamsTab() {
         // Create exam and add selected questions
         let examId: string | undefined
         try {
-          examId = await createExam(formData)
+          // Always save scheduleStart and scheduleEnd as ISO strings
+          examId = await createExam({
+            ...formData,
+            scheduleStart: formData.scheduleStart ? new Date(formData.scheduleStart).toISOString() : '',
+            scheduleEnd: formData.scheduleEnd ? new Date(formData.scheduleEnd).toISOString() : '',
+          })
         } catch (err) {
           console.error('[Admin ExamsTab] Firestore createExam error:', err)
           toast.error('Firestore error: ' + (err?.message || err))
