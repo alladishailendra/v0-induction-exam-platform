@@ -33,6 +33,7 @@ export function ResultsTab() {
   const [searchTerm, setSearchTerm] = useState('')
   const [sortBy, setSortBy] = useState<'score' | 'time' | 'violations'>('score')
   const [loading, setLoading] = useState(true)
+  const [selectedResultIds, setSelectedResultIds] = useState<string[]>([])
 
   const loadData = async () => {
     try {
@@ -230,19 +231,48 @@ export function ResultsTab() {
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-16">#</TableHead>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Exam</TableHead>
-                        <TableHead className="text-right">Score</TableHead>
-                        <TableHead className="text-right">Accuracy</TableHead>
-                        <TableHead className="text-right">Time</TableHead>
-                        <TableHead className="text-right">Violations</TableHead>
-                      </TableRow>
-                    </TableHeader>
+  <TableRow>
+    <TableHead className="w-8">
+      <input
+        type="checkbox"
+        checked={rankedResults.length > 0 && rankedResults.every(r => selectedResultIds.includes(r.id))}
+        indeterminate={selectedResultIds.length > 0 && selectedResultIds.length < rankedResults.length}
+        onChange={e => {
+          if (e.target.checked) {
+            setSelectedResultIds(rankedResults.map(r => r.id))
+          } else {
+            setSelectedResultIds([])
+          }
+        }}
+        aria-label="Select all results"
+      />
+    </TableHead>
+    <TableHead className="w-16">#</TableHead>
+    <TableHead>Student</TableHead>
+    <TableHead>Exam</TableHead>
+    <TableHead className="text-right">Score</TableHead>
+    <TableHead className="text-right">Accuracy</TableHead>
+    <TableHead className="text-right">Time</TableHead>
+    <TableHead className="text-right">Violations</TableHead>
+  </TableRow>
+</TableHeader>
                     <TableBody>
                       {rankedResults.map((result) => (
-                        <TableRow key={result.id}>
+                        <TableRow key={result.id} selected={selectedResultIds.includes(result.id)}>
+                          <TableCell className="w-8">
+                            <input
+                              type="checkbox"
+                              checked={selectedResultIds.includes(result.id)}
+                              onChange={e => {
+                                if (e.target.checked) {
+                                  setSelectedResultIds(prev => [...prev, result.id])
+                                } else {
+                                  setSelectedResultIds(prev => prev.filter(id => id !== result.id))
+                                }
+                              }}
+                              aria-label={`Select result ${result.id}`}
+                            />
+                          </TableCell>
                           <TableCell className="font-medium">
                             {result.rank <= 3 ? (
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${

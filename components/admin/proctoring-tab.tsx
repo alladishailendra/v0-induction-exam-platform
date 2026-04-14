@@ -22,6 +22,7 @@ export function ProctoringTab() {
   const [sessions, setSessions] = useState<StudentSession[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedSnapshot, setSelectedSnapshot] = useState<ProctoringSnapshot | null>(null)
+  const [selectedViolationIds, setSelectedViolationIds] = useState<string[]>([])
 
   const loadData = async () => {
     setLoading(true)
@@ -146,29 +147,84 @@ export function ProctoringTab() {
                 <p className="text-center text-slate-500 py-8">No violations recorded</p>
               ) : (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {violations.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((violation) => {
-                    const session = getSessionInfo(violation.sessionId)
-                    const typeInfo = violationTypes[violation.type] || { label: violation.type, color: 'bg-slate-100 text-slate-700' }
-                    
-                    return (
-                      <div key={violation.id} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge className={typeInfo.color}>{typeInfo.label}</Badge>
-                            <span className="text-xs text-slate-500">
-                              {new Date(violation.timestamp).toLocaleString()}
-                            </span>
-                          </div>
-                          <p className="text-sm text-slate-700">{violation.description}</p>
-                          {session && (
-                            <p className="text-xs text-slate-500 mt-1">
-                              Student: {session.fullName} ({session.clubId})
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
+                  <div className="flex items-center mb-2">
+  <input
+    type="checkbox"
+    checked={violations.length > 0 && violations.every(v => selectedViolationIds.includes(v.id))}
+    indeterminate={selectedViolationIds.length > 0 && selectedViolationIds.length < violations.length}
+    onChange={e => {
+      if (e.target.checked) {
+        setSelectedViolationIds(violations.map(v => v.id))
+      } else {
+        setSelectedViolationIds([])
+      }
+    }}
+    aria-label="Select all violations"
+  />
+  <span className="ml-2 text-xs text-slate-500">Select All</span>
+  {selectedViolationIds.length > 0 && (
+    <Button
+      variant="destructive"
+      size="sm"
+      className="ml-4"
+      onClick={async () => {
+        for (const id of selectedViolationIds) {
+          await handleDeleteViolation(id)
+        }
+        setSelectedViolationIds([])
+      }}
+    >
+      Delete Selected
+    </Button>
+  )}
+</div>
+{violations.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((violation) => {
+  const session = getSessionInfo(violation.sessionId)
+  const typeInfo = violationTypes[violation.type] || { label: violation.type, color: 'bg-slate-100 text-slate-700' }
+  return (
+    <div key={violation.id} className={`flex items-start gap-3 p-3 bg-slate-50 rounded-lg${selectedViolationIds.includes(violation.id) ? ' ring-2 ring-amber-200' : ''}`}> 
+      <input
+        type="checkbox"
+        checked={selectedViolationIds.includes(violation.id)}
+        onChange={e => {
+          if (e.target.checked) {
+            setSelectedViolationIds(prev => [...prev, violation.id])
+          } else {
+            setSelectedViolationIds(prev => prev.filter(id => id !== violation.id))
+          }
+        }}
+        aria-label={`Select violation ${violation.id}`}
+        className="mt-1 mr-2"
+      />
+      <div className="flex-1">
+        <div className="flex items-center gap-2 mb-1">
+          <Badge className={typeInfo.color}>{typeInfo.label}</Badge>
+          <span className="text-xs text-slate-500">
+            {new Date(violation.timestamp).toLocaleString()}
+          </span>
+        </div>
+        <p className="text-sm text-slate-700">{violation.description}</p>
+        {session && (
+          <p className="text-xs text-slate-500 mt-1">
+            Student: {session.fullName} ({session.clubId})
+          </p>
+        )}
+      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="text-red-600"
+        onClick={async () => {
+          await handleDeleteViolation(violation.id)
+          setSelectedViolationIds(prev => prev.filter(id => id !== violation.id))
+        }}
+        aria-label="Delete violation"
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button>
+    </div>
+  )
+})}
                 </div>
               )}
             </CardContent>

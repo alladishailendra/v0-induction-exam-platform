@@ -535,7 +535,37 @@ export function ExamsTab() {
             {!selectedExam && (
               <div className="space-y-3 pt-4 border-t border-slate-200">
                 <div className="flex items-center justify-between">
-                  <Label className="text-base font-medium">Add Questions ({selectedQuestionsForNew.length} selected)</Label>
+                  <div className="flex items-center mb-2">
+  <input
+    type="checkbox"
+    checked={questions.length > 0 && questions.every(q => selectedQuestionsForNew.includes(q.id))}
+    onChange={e => {
+      if (e.target.checked) {
+        setSelectedQuestionsForNew(questions.map(q => q.id))
+      } else {
+        setSelectedQuestionsForNew([])
+      }
+    }}
+    aria-label="Select all questions"
+  />
+  <span className="ml-2 text-xs text-slate-500">Select All</span>
+</div>
+<div className="flex items-center mb-2">
+  <input
+    type="checkbox"
+    checked={questions.length > 0 && questions.every(q => selectedQuestionsForNew.includes(q.id))}
+    onChange={e => {
+      if (e.target.checked) {
+        setSelectedQuestionsForNew(questions.map(q => q.id))
+      } else {
+        setSelectedQuestionsForNew([])
+      }
+    }}
+    aria-label="Select all questions"
+  />
+  <span className="ml-2 text-xs text-slate-500">Select All</span>
+</div>
+<Label className="text-base font-medium">Add Questions ({selectedQuestionsForNew.length} selected)</Label>
                   <Button 
                     type="button" 
                     variant="outline" 
