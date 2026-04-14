@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Shield, AlertTriangle, Eye, Check, X, Image, RefreshCw } from 'lucide-react'
+import { Shield, AlertTriangle, Eye, Check, X, Image, RefreshCw, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
